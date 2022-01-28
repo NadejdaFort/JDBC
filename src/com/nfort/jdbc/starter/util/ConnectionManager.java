@@ -5,9 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public final class ConnectionManager {
-    private static final String URL = "jdbc:postgresql://localhost:5432/flight_repository";
-    private static final String USER_NAME = "postgres";
-    private static final String PASSWORD = "";
+
+    private static final String URL_KEY = "db.url";
+    private static final String USER_NAME_KEY = "db.userName";
+    private static final String PASSWORD_KEY = "db.password";
 
 // до Java1.8 нужно было прописывать статический блок инициализации
     static{
@@ -27,7 +28,11 @@ public final class ConnectionManager {
 
     public static Connection open() {
         try {
-            return DriverManager.getConnection(URL, USER_NAME, PASSWORD);
+            return DriverManager.getConnection(
+                    PropertiesUtil.get(URL_KEY),
+                    PropertiesUtil.get(USER_NAME_KEY),
+                    PropertiesUtil.get(PASSWORD_KEY)
+            );
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
