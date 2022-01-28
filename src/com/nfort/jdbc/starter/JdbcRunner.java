@@ -13,18 +13,20 @@ public class JdbcRunner {
        // Class<Driver> driverClass = Driver.class;
         String sql;
         sql = """
-               CREATE TABLE IF NOT EXISTS info 
-               (
-               id SERIAL PRIMARY KEY,
-               data TEXT NOT NULL 
-               );                
-                """;
+               UPDATE info
+               SET data = 'TestTest'
+               WHERE id = 5
+               RETURNING *;              
+                """;   // в этом запросе возвращается ResultSet, а не как ожидается - int,
+                        // это происходит из-за RETURNING, без него вернется int
 
         try (var connection = ConnectionManager.open();
              var statement = connection.createStatement()) {
             System.out.println(connection.getSchema());
             System.out.println(connection.getTransactionIsolation());
-            var executeResult = statement.execute(sql);
+//            var executeResult = statement.execute(sql);
+//            System.out.println(statement.getUpdateCount());
+            var executeResult = statement.executeUpdate(sql);
             System.out.println(executeResult);
         }
     }
