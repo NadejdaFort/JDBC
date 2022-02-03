@@ -4,14 +4,28 @@ import com.nfort.jdbc.starter.dao.TicketDao;
 import com.nfort.jdbc.starter.entity.Ticket;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 public class DaoRunner {
 
     public static void main(String[] args) {
+        var tickets = TicketDao.getInstance().findAll();
+        System.out.println();
+    }
+
+    private static void updateTest() {
         var ticketDao = TicketDao.getInstance();
 //        saveTest();
-        var deleteResult = ticketDao.delete(56L);
-        System.out.println(deleteResult);
+//        var deleteResult = ticketDao.delete(56L);
+//        System.out.println(deleteResult);
+        var maybeTicket = ticketDao.findById(2L);
+        System.out.println(maybeTicket);
+
+        maybeTicket.ifPresent(ticket -> {
+            ticket.setCost(BigDecimal.valueOf(188.88));
+            ticketDao.update(ticket);
+        });
     }
 
     private static void saveTest() {
