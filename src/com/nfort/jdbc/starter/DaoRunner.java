@@ -1,6 +1,7 @@
 package com.nfort.jdbc.starter;
 
 import com.nfort.jdbc.starter.dao.TicketDao;
+import com.nfort.jdbc.starter.dto.TicketFilter;
 import com.nfort.jdbc.starter.entity.Ticket;
 
 import java.math.BigDecimal;
@@ -10,8 +11,9 @@ import java.util.Optional;
 public class DaoRunner {
 
     public static void main(String[] args) {
-        var tickets = TicketDao.getInstance().findAll();
-        System.out.println();
+        var ticketFilter = new TicketFilter(3, 0, "Евгений Кудрявцев", "A1");
+        var tickets = TicketDao.getInstance().findAll(ticketFilter);
+        System.out.println(tickets);
     }
 
     private static void updateTest() {
