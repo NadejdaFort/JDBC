@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 
-public class TicketDao{
+public class TicketDao implements Dao<Long, Ticket>{
     private static final TicketDao INSTANCE = new TicketDao();
     private static final String DELETE_SQL = """
             DELETE FROM ticket
@@ -54,6 +54,7 @@ public class TicketDao{
     private static final String FIND_BY_ID_SQL = FIND_ALL_SQL + """
             WHERE ticket.id = ?
             """;
+    private final FlightDao flightDao = FlightDao.getInstance();
 
     private TicketDao() {
     }
@@ -140,7 +141,8 @@ public class TicketDao{
                 resultSet.getLong("id"),
                 resultSet.getString("passenger_no"),
                 resultSet.getString("passenger_name"),
-                flight,
+                flightDao.findById(resultSet.getLong("flight_id"),
+                        resultSet.getStatement().getConnection()).orElse(null),
                 resultSet.getString("seat_no"),
                 resultSet.getBigDecimal("cost")
         );

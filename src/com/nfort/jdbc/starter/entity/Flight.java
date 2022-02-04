@@ -1,6 +1,7 @@
 package com.nfort.jdbc.starter.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record Flight (Long id,
                       String flightNo,
@@ -9,5 +10,6 @@ public record Flight (Long id,
                       LocalDateTime arrivalDate,
                       String arrivalAirportCode,
                       Integer aircraftId,
-                      String status){
+                      String status,
+                      List<Ticket> tickets){
 }

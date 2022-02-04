@@ -17,3 +17,9 @@ SELECT *
 FROM test2
 WHERE id > 80000
 LIMIT 20;
+
+SELECT *
+FROM flight
+LEFT JOIN ticket t
+    ON flight.id = t.flight_id
+WHERE flight.id = 3;
