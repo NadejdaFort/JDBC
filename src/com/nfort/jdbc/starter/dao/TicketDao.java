@@ -1,6 +1,7 @@
 package com.nfort.jdbc.starter.dao;
 
 import com.nfort.jdbc.starter.dto.TicketFilter;
+import com.nfort.jdbc.starter.entity.Flight;
 import com.nfort.jdbc.starter.entity.Ticket;
 import com.nfort.jdbc.starter.exception.DaoException;
 import com.nfort.jdbc.starter.util.ConnectionManager;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 
-public class TicketDao {
+public class TicketDao{
     private static final TicketDao INSTANCE = new TicketDao();
     private static final String DELETE_SQL = """
             DELETE FROM ticket
@@ -33,11 +34,25 @@ public class TicketDao {
             WHERE id = ?
             """;
     private static final String FIND_ALL_SQL = """
-            SELECT id, passenger_no, passenger_name, flight_id, seat_no, cost
+            SELECT ticket.id,
+                passenger_no,
+                passenger_name,
+                flight_id,
+                seat_no,
+                cost,
+                f.flight_no,
+                f.departure_date,
+                f.departure_airport_code,
+                f.arrival_date,
+                f.arrival_airport_code,
+                f.aircraft_id,
+                f.status
             FROM ticket
+            LEFT JOIN flight f
+             ON f.id = ticket.flight_id
             """;
     private static final String FIND_BY_ID_SQL = FIND_ALL_SQL + """
-            WHERE id = ?
+            WHERE ticket.id = ?
             """;
 
     private TicketDao() {
@@ -46,11 +61,11 @@ public class TicketDao {
     public List<Ticket> findAll(TicketFilter filter) {
         List<Object> parameters = new ArrayList<>();
         List<String> whereSql = new ArrayList<>();
-        if(filter.seatNo() != null) {
+        if (filter.seatNo() != null) {
             whereSql.add("seat_no LIKE ?");
             parameters.add("%" + filter.seatNo() + "%");
         }
-        if(filter.passengerName() != null) {
+        if (filter.passengerName() != null) {
             whereSql.add("passenger_name = ?");
             parameters.add(filter.passengerName());
         }
@@ -60,17 +75,17 @@ public class TicketDao {
                 .collect(joining(" AND ", " WHERE ", " LIMIT ? OFFSET ? "));
 
         var sql = FIND_ALL_SQL + where; // Если в фильтре не будет ни одного параметра,
-                                        // то нужно добавить пустую строку вместо where, иначе будет ошибка
+        // то нужно добавить пустую строку вместо where, иначе будет ошибка
         try (var connection = ConnectionManager.get();
              var preparedStatement = connection.prepareStatement(sql)) {
-            for(int i = 0; i < parameters.size(); i++) {
+            for (int i = 0; i < parameters.size(); i++) {
                 preparedStatement.setObject(i + 1, parameters.get(i));
             }
             System.out.println(preparedStatement);
 
             var resultSet = preparedStatement.executeQuery();
             List<Ticket> tickets = new ArrayList<>();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 tickets.add(buildTicket(resultSet));
             }
             return tickets;
@@ -111,11 +126,21 @@ public class TicketDao {
     }
 
     private Ticket buildTicket(ResultSet resultSet) throws SQLException {
+        var flight = new Flight(
+                resultSet.getLong("flight_id"),
+                resultSet.getString("flight_no"),
+                resultSet.getTimestamp("departure_date").toLocalDateTime(),
+                resultSet.getString("departure_airport_code"),
+                resultSet.getTimestamp("arrival_date").toLocalDateTime(),
+                resultSet.getString("arrival_airport_code"),
+                resultSet.getInt("aircraft_id"),
+                resultSet.getString("status")
+        );
         return new Ticket(
                 resultSet.getLong("id"),
                 resultSet.getString("passenger_no"),
                 resultSet.getString("passenger_name"),
-                resultSet.getLong("flight_id"),
+                flight,
                 resultSet.getString("seat_no"),
                 resultSet.getBigDecimal("cost")
         );
@@ -126,7 +151,7 @@ public class TicketDao {
              var preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
             preparedStatement.setString(1, ticket.getPassengerNo());
             preparedStatement.setString(2, ticket.getPassengerName());
-            preparedStatement.setLong(3, ticket.getFlightId());
+            preparedStatement.setLong(3, ticket.getFlight().id());
             preparedStatement.setString(4, ticket.getSeatNo());
             preparedStatement.setBigDecimal(5, ticket.getCost());
             preparedStatement.setLong(6, ticket.getId());
@@ -142,7 +167,7 @@ public class TicketDao {
              var preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, ticket.getPassengerNo());
             preparedStatement.setString(2, ticket.getPassengerName());
-            preparedStatement.setLong(3, ticket.getFlightId());
+            preparedStatement.setLong(3, ticket.getFlight().id());
             preparedStatement.setString(4, ticket.getSeatNo());
             preparedStatement.setBigDecimal(5, ticket.getCost());
 
